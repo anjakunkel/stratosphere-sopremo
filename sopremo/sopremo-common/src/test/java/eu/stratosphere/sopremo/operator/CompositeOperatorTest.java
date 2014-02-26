@@ -21,9 +21,7 @@ import eu.stratosphere.util.dag.GraphLevelPartitioner.Level;
  * The class <code>CompositeOperatorTest</code> contains tests for the class <code>{@link CompositeOperator}</code>.
  */
 public class CompositeOperatorTest extends EqualCloneTest<CompositeOperatorTest.CompositeOperatorImpl> {
-	/**
-	 * Run the PactModule asPactModule(EvaluationContext) method test.
-	 */
+
 	@Test
 	public void testAsElementaryOperators() throws Exception {
 		final Operator<?> input1 = new Source("file://1");
@@ -50,11 +48,90 @@ public class CompositeOperatorTest extends EqualCloneTest<CompositeOperatorTest.
 			.getLevelNodes().get(0).getClass());
 		assertSame(Sink.class, reachableNodes.get(3).getLevelNodes().get(0).getClass());
 	}
+	
+
+	@Test
+	public void testNoPropagation() throws Exception {
+		final Operator<?> input1 = new Source("file://1");
+		final Operator<?> input2 = new Source("file://2");
+		final Operator<?> input3 = new Source("file://3");
+		final CompositeOperator<?> fixture = new CompositeOperatorImpl(1);
+		fixture.setInputs(input1, input2, input3);
+
+
+		final ElementarySopremoModule module = fixture.asElementaryOperators();
+		assertNotNull(module);
+		fixture.propagateAllProperties(module);
+		
+		for(Operator<?> op: module.getReachableNodes()) {
+			assertNotNull(op);
+		}
+		
+	}
+
+	@Test
+	public void testPropagation() throws Exception {
+		final Operator<?> input1 = new Source("file://1");
+		final Operator<?> input2 = new Source("file://2");
+		final Operator<?> input3 = new Source("file://3");
+		final CompositeOperatorImplWithProperty fixture = new CompositeOperatorImplWithProperty(1);
+		fixture.setInputs(input1, input2, input3);
+		fixture.setPropertyX(new String("Test"));
+		final ElementarySopremoModule module = fixture.asElementaryOperators();
+		assertNotNull(module);
+		
+		for(Operator<?> op: module.getReachableNodes()) {
+			assertNotNull(op);
+			if(op instanceof ElementaryOperatorImpl) {
+				Object propertyX = ((ElementaryOperatorImpl) op).getPropertyX();
+				assertEquals(fixture.getPropertyX(), propertyX);
+			}
+		}
+		
+	}
+	@Test
+	public void testPropagationOfUnsetValue() throws Exception {
+		final Operator<?> input1 = new Source("file://1");
+		final Operator<?> input2 = new Source("file://2");
+		final Operator<?> input3 = new Source("file://3");
+		final CompositeOperatorImplWithProperty fixture = new CompositeOperatorImplWithProperty(1);
+		fixture.setInputs(input1, input2, input3);
+		final ElementarySopremoModule module = fixture.asElementaryOperators();
+		assertNotNull(module);
+		
+		for(Operator<?> op: module.getReachableNodes()) {
+			assertNotNull(op);
+			if(op instanceof ElementaryOperatorImpl) {
+				Object propertyX = ((ElementaryOperatorImpl) op).getPropertyX();
+				assertEquals(fixture.getPropertyX(), propertyX);
+			}
+		}
+		
+	}
 
 	@Override
 	protected CompositeOperatorImpl createDefaultInstance(final int index) {
 		return new CompositeOperatorImpl(index);
 	}
+	
+	static class CompositeOperatorImplWithProperty extends CompositeOperatorImpl {
+		
+		protected Object value;
+		
+		public CompositeOperatorImplWithProperty(final int index) {
+			super(index);
+		}
+		
+		@Property(propagate = true)
+		public void setPropertyX(Object value) {
+			this.value = value;
+		}
+		
+		public Object getPropertyX() {
+			return this.value;
+		}
+	}
+
 
 	static class CompositeOperatorImpl extends CompositeOperator<CompositeOperatorImpl> {
 		private final int index;
@@ -108,6 +185,16 @@ public class CompositeOperatorTest extends EqualCloneTest<CompositeOperatorTest.
 
 	@InputCardinality(min = 2, max = 2)
 	static class ElementaryOperatorImpl extends ElementaryOperator<ElementaryOperatorImpl> {
+		protected Object value;
+		
+		@Property
+		public void setPropertyX(Object value) {
+			this.value = value;
+		}
+		
+		public Object getPropertyX() {
+			return this.value;
+		}
 		static class Implementation extends SopremoCross {
 			/*
 			 * (non-Javadoc)

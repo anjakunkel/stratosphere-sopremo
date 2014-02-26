@@ -19,4 +19,14 @@ public @interface Property {
 	boolean input() default false;
 
 	boolean preferred() default false;
+
+	/**
+	 * If set to true on an CompositeOperator, 
+	 * the value of this property is copied to the properties 
+	 * with the same name at all contained Operators.
+	 * Does nothing if set on another Operator.
+	 * 
+	 * Defaults to false.
+	 */
+	boolean propagate() default false;
 }
