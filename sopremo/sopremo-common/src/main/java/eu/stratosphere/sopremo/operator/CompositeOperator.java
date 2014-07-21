@@ -128,7 +128,11 @@ public abstract class CompositeOperator<Self extends CompositeOperator<Self>>
 					destProperty.getWriteMethod().invoke(op, value);
 				}
 			}
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+		} catch (IllegalAccessException e) {
+			SopremoUtil.LOG.error("Error at propagation of property "+property.getName()+".", e);
+		} catch (IllegalArgumentException e) {
+			SopremoUtil.LOG.error("Error at propagation of property "+property.getName()+".", e);
+		} catch (InvocationTargetException e) {
 			SopremoUtil.LOG.error("Error at propagation of property "+property.getName()+".", e);
 		}
 	}
