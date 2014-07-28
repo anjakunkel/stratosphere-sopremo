@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+import org.apache.maven.cli.MavenCli;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 
@@ -29,13 +30,8 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 public class MavenUtil {
 
 	public static File buildJarForProject(final String canonicalProjectPath, final String jarName) {
-		/*
-		 * MavenCli cli = new MavenCli(); if (cli.doMain(new String[] {
-		 * "jar:jar", "-Djar.finalName=" + jarName }, new
-		 * File(".").getAbsolutePath(), System.out, System.out) != 0) { throw
-		 * new RuntimeException("Jar for desired project path " +
-		 * canonicalProjectPath + " could not be build."); }
-		 */
+		
+		
 		try {
 			boolean success = false;
 			String line;
@@ -51,15 +47,26 @@ public class MavenUtil {
 			p.waitFor();
 
 			if (!success)
-				throw new RuntimeException("Jar for desired project path " + canonicalProjectPath +
-					" could not be build.");
+				buildJarForProjectUsingMavenCli(canonicalProjectPath, jarName);
 
 		} catch (final IOException err) {
-			throw new RuntimeException("Jar for desired project path " + canonicalProjectPath + " could not be build.");
+			buildJarForProjectUsingMavenCli(canonicalProjectPath, jarName);
+
 		} catch (final InterruptedException e) {
-			throw new RuntimeException("Jar for desired project path " + canonicalProjectPath + " could not be build.");
+			buildJarForProjectUsingMavenCli(canonicalProjectPath, jarName);
 		}
 		return new File("target", jarName + ".jar");
+	}
+
+	protected static void buildJarForProjectUsingMavenCli(
+			final String canonicalProjectPath, final String jarName) {
+		MavenCli cli = new MavenCli();
+		if (cli.doMain(
+				new String[] { "jar:jar", "-Djar.finalName=" + jarName },
+				new File(".").getAbsolutePath(), System.out, System.out) != 0) {
+			throw new RuntimeException("Jar for desired project path "
+					+ canonicalProjectPath + " could not be build.");
+		}
 	}
 
 	public static String getProjectName() {
